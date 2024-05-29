@@ -1,0 +1,56 @@
+import cv2
+import numpy
+
+# تابع برای ذخیره تصویر پردازش شده
+def writeResult(image, name="result.png"):
+    # استفاده از کتابخانه OpenCV برای نوشتن تصویر در فایل
+    cv2.imwrite(name, image)
+
+# تابع برای اعمال فیلتر سوبل بر روی تصویر
+def Convolve(image, type):
+    # تعریف کرنل‌های سوبل برای تشخیص لبه در جهات افقی و عمودی
+    sobelX = [[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]
+    sobelY = [[-1, -2, -1], [0, 0, 0], [1, 2, 1]]
+    sobel = []
+    
+    # انتخاب کرنل بر اساس نوع درخواستی
+    if type == 0:
+        sobel = sobelX
+    else:
+        sobel = sobelY
+    
+    # دریافت ابعاد تصویر
+    ySize, xSize = image.shape
+    # ایجاد یک آرایه جدید برای ذخیره تصویر نتیجه
+    newImage = numpy.ndarray((ySize, xSize))
+    
+    # حلقه برای اعمال فیلتر بر روی هر پیکسل تصویر
+    for i in range(xSize - 3):
+        i = i + 1
+        for j in range(ySize - 3):
+            j = j + 1
+            # اعمال فیلتر سوبل بر روی پیکسل‌ها و محاسبه مقدار جدید
+            a = image[j][i] * sobel[0][0]
+            b = image[j][i + 1] * sobel[0][1]
+            c = image[j][i + 2] * sobel[0][2]
+            d = image[j + 1][i] * sobel[1][0]
+            e = image[j + 1][i + 1] * sobel[1][1]
+            f = image[j + 1][i + 2] * sobel[1][2]
+            g = image[j + 2][i] * sobel[2][0]
+            h = image[j + 2][i + 1] * sobel[2][1]
+            k = image[j + 2][i + 2] * sobel[2][2]
+            result = a + b + c + d + e + f + g + h + k
+            
+            # تنظیم مقدار پیکسل بر اساس محدوده مقادیر مجاز
+            if result > 255:
+                newImage[j + 1][i + 1] = 255
+            elif result < 0:
+                newImage[j + 1][i + 1] = 0
+            else:
+                newImage[j + 1][i + 1] = result
+    return newImage
+
+# خواندن تصویر و اعمال فیلتر سوبل برای تشخیص لبه‌ها در جهت X و Y
+image = cv2.imread("./image.png", cv2.IMREAD_GRAYSCALE)
+writeResult(Convolve(image, type=0), "x.png")
+writeResult(Convolve(image, type=1), "y.png")
